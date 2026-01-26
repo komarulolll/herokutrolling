@@ -36,8 +36,8 @@ import json
 import aiohttp
 import asyncio
 from random import choice
+from telethon.tl.types import Message, User # type: ignore
 from .. import loader, utils
-from telethon.tl.types import Message # type: ignore
 
 @loader.tds
 class KomarubullingMod(loader.Module):
@@ -49,7 +49,9 @@ class KomarubullingMod(loader.Module):
         "error_decoding": "<b><i>Error: The JSON could not be decoded.</i></b>",
         "error_uploading_data": "<b><i>Error loading data</i></b>",
         "error_valid_args": "<b><i>Please enter valid arguments!</i></b>",
+        "error_user": "<b><i>Please specify a user to tag (reply or mention)!</i></b>",
         "launched": "<b><i>Komarubulling launched!</i></b>\n\n<b><i>Use <code>{prefix}komaruoff</code> to stop the attack.</i></b>",
+        "launched_tag": "<b><i>Komarubulling with tag launched! Target: {user}</i></b>\n\n<b><i>Use <code>{prefix}komaruoff</code> to stop the attack.</i></b>",
         "stopped": "<b><i>Komarubulling has stopped.</i></b>",
     }
 
@@ -58,7 +60,9 @@ class KomarubullingMod(loader.Module):
         "error_decoding": "<b><i>Error: не удалось декодировать JSON.</i></b>",
         "error_uploading_data": "<b><i>Ошибка при загрузке данных</i></b>",
         "error_valid_args": "<b><i>Введите корректные аргументы!</i></b>",
+        "error_user": "<b><i>Укажите пользователя для тега (ответом или упоминанием)!</i></b>",
         "launched": "<b><i>Komarubulling запущен!</i></b>\n\n<b><i>Используйте <code>{prefix}komaruoff</code>, чтобы остановить атаку.</i></b>",
+        "launched_tag": "<b><i>Komarubulling с тегом запущен! Цель: {user}</i></b>\n\n<b><i>Используйте <code>{prefix}komaruoff</code>, чтобы остановить атаку.</i></b>",
         "stopped": "<b><i>Komarubulling остановлен.</i></b>",
     }
 
@@ -67,7 +71,9 @@ class KomarubullingMod(loader.Module):
         "error_decoding": "<b><i>Error: JSON декодлаш муваффақиятли амалга ошмади.</i></b>",
         "error_uploading_data": "<b><i>Маълумотлар юклаб олинмади</i></b>",
         "error_valid_args": "<b><i>Iltimos, to'g'ri dalillarni kiriting!</i></b>",
+        "error_user": "<b><i>Iltimos, teglash uchun foydalanuvchini ko'rsating (javob yoki eslatma)!</i></b>",
         "launched": "<b><i>Komarubulling ishga tushirildi!</i></b>\n\n<b><i>Hujumni toʻxtatish uchun <code>{prefix}komaruoff</code> dan foydalaning.</i></b>",
+        "launched_tag": "<b><i>Teg bilan Komarubulling ishga tushirildi! Maqsad: {user}</i></b>\n\n<b><i>Hujumni toʻxtatish uchun <code>{prefix}komaruoff</code> dan foydalaning.</i></b>",
         "stopped": "<b><i>Komarubulling to'xtadi.</i></b>",
     }
 
@@ -76,7 +82,9 @@ class KomarubullingMod(loader.Module):
         "error_decoding": "<b><i>Error: JSON konnte nicht decodiert werden.</i></b>",
         "error_uploading_data": "<b><i>Fehler beim Hochladen der Daten</i></b>",
         "error_valid_args": "<b><i>Bitte geben Sie gültige Argumente ein!</i></b>",
+        "error_user": "<b><i>Bitte geben Sie einen zu markierenden Benutzer an (Antwort oder Erwähnung)!</i></b>",
         "launched": "<b><i>Komarubulling gestartet!</i></b>\n\n<b><i>Verwenden Sie <code>{prefix}komaruoff</code>, um den Angriff zu stoppen.</i></b>",
+        "launched_tag": "<b><i>Komarubulling mit Tag gestartet! Ziel: {user}</i></b>\n\n<b><i>Verwenden Sie <code>{prefix}komaruoff</code>, um den Angriff zu stoppen.</i></b>",
         "stopped": "<b><i>Komarubulling hat angehalten.</i></b>",
     }
 
@@ -85,7 +93,9 @@ class KomarubullingMod(loader.Module):
         "error_decoding": "<b><i>Error: No se pudo decodificar JSON.</i></b>",
         "error_uploading_data": "<b><i>Error al cargar los datos</i></b>",
         "error_valid_args": "<b><i>¡Por favor ingrese argumentos válidos!</i></b>",
+        "error_user": "<b><i>¡Especifique un usuario para etiquetar (responder o mencionar)!</i></b>",
         "launched": "<b><i>¡Komarubulling lanzado!</i></b>\n\n<b><i>Utiliza <code>{prefix}komaruoff</code> para detener el ataque.</i></b>",
+        "launched_tag": "<b><i>¡Komarubulling con etiqueta lanzado! Objetivo: {user}</i></b>\n\n<b><i>Utiliza <code>{prefix}komaruoff</code> para detener el ataque.</i></b>",
         "stopped": "<b><i>Komarubulling se ha detenido.</i></b>",
     }
 
@@ -151,6 +161,76 @@ class KomarubullingMod(loader.Module):
                         while self.db.get(self.strings["name"], "state"):
                             bull_text = choice(data["BullText"])
                             await message.respond(text + bull_text)
+                            await asyncio.sleep(time)
+                        return
+                    else:
+                        return await utils.answer(message, self.strings("error_key"))
+                else:
+                    return await utils.answer(message, f"{self.strings('error_uploading_data')}: {response.status}")
+
+    @loader.command(
+        ru_doc="[time] [tag @] - Спам оскорблениями с тегом пользователя",
+        uz_doc="[time] [tag @] - Foydalanuvchini teg bilan haqorat spam",
+        de_doc="[time] [tag @] - Spam-Beleidigungen mit Benutzer-Tag",
+        es_doc="[time] [tag @] - Spam de insultos con etiqueta de usuario",
+    )
+    async def komarutag(self, message: Message):
+        """[time] [tag @] - Spam insults with user tag"""
+        url = "https://github.com/komarulolll/herokutrolling/blob/main/insults.json"
+        args = utils.get_args(message)
+        
+        # Получаем пользователя для тега
+        user = None
+        reply = await message.get_reply_message()
+        
+        if reply and reply.sender_id:
+            user = await message.client.get_entity(reply.sender_id)
+        elif message.entities:
+            # Проверяем упоминания в сообщении
+            for entity in message.entities:
+                if hasattr(entity, 'user_id'):
+                    user = await message.client.get_entity(entity.user_id)
+                    break
+        
+        if not user:
+            await utils.answer(message, self.strings("error_user"))
+            return
+
+        if not args:
+            await utils.answer(message, self.strings("error_valid_args"))
+            return
+        else:
+            self.db.set(self.strings["name"], "state", True)
+
+        try:
+            time = float(args[0])
+            text = ' '.join(args[1:]) + " " if len(args) > 1 else ""
+        except ValueError:
+            await utils.answer(message, self.strings("error_valid_args"))
+            return
+
+        # Формируем тег пользователя
+        user_tag = f"[{user.first_name or ''}](tg://user?id={user.id}) "
+        
+        await utils.answer(
+            message, 
+            self.strings("launched_tag").format(
+                prefix=self.get_prefix(),
+                user=f"[{user.first_name or ''}](tg://user?id={user.id})"
+            )
+        )
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                if response.status == 200:
+                    response = await response.text()
+                    
+                    data = json.loads(response)
+                    if "BullText" in data and isinstance(data["BullText"], list) and data["BullText"]:
+                        while self.db.get(self.strings["name"], "state"):
+                            bull_text = choice(data["BullText"])
+                            # Добавляем тег пользователя в начале сообщения
+                            await message.respond(user_tag + text + bull_text)
                             await asyncio.sleep(time)
                         return
                     else:
