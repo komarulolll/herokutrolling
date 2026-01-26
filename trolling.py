@@ -30,17 +30,19 @@
 # Author: https://t.me/I_love_wizzy
 # scope: heroku && hikka
 # ---------------------------------------------------------------------------------
-__version__ = (1, 1, 0)
+__version__ = (1, 0, 0)
 
 import json
 import aiohttp
 import asyncio
+import re
 from random import choice
-from telethon.tl.types import Message, User # type: ignore
+from telethon.tl.types import Message, Use
 from .. import loader, utils
 
 @loader.tds
 class KomarubullingMod(loader.Module):
+    """Module for insults, make the interlocutor depressed."""
 
     strings = {
         "name": "Komarubulling",
@@ -50,7 +52,7 @@ class KomarubullingMod(loader.Module):
         "error_valid_args": "<b><i>Please enter valid arguments!</i></b>",
         "error_user": "<b><i>Please specify a user to tag (reply or mention)!</i></b>",
         "launched": "<b><i>Komarubulling launched!</i></b>\n\n<b><i>Use <code>{prefix}komaruoff</code> to stop the attack.</i></b>",
-        "launched_tag": "<b><i>Komarubulling with tag launched! Target: {user}</i></b>\n\n<b><i>Use <code>{prefix}komaruoff</code> to stop the attack.</i></b>",
+        "launched_tag": "<b><i>Komarubulling with tag launched! Target: @{username}</i></b>\n\n<b><i>Use <code>{prefix}komaruoff</code> to stop the attack.</i></b>",
         "stopped": "<b><i>Komarubulling has stopped.</i></b>",
     }
 
@@ -61,7 +63,7 @@ class KomarubullingMod(loader.Module):
         "error_valid_args": "<b><i>Введите корректные аргументы!</i></b>",
         "error_user": "<b><i>Укажите пользователя для тега (ответом или упоминанием)!</i></b>",
         "launched": "<b><i>Komarubulling запущен!</i></b>\n\n<b><i>Используйте <code>{prefix}komaruoff</code>, чтобы остановить атаку.</i></b>",
-        "launched_tag": "<b><i>Komarubulling с тегом запущен! Цель: {user}</i></b>\n\n<b><i>Используйте <code>{prefix}komaruoff</code>, чтобы остановить атаку.</i></b>",
+        "launched_tag": "<b><i>Komarubulling с тегом запущен! Цель: @{username}</i></b>\n\n<b><i>Используйте <code>{prefix}komaruoff</code>, чтобы остановить атаку.</i></b>",
         "stopped": "<b><i>Komarubulling остановлен.</i></b>",
     }
 
@@ -72,7 +74,7 @@ class KomarubullingMod(loader.Module):
         "error_valid_args": "<b><i>Iltimos, to'g'ri dalillarni kiriting!</i></b>",
         "error_user": "<b><i>Iltimos, teglash uchun foydalanuvchini ko'rsating (javob yoki eslatma)!</i></b>",
         "launched": "<b><i>Komarubulling ishga tushirildi!</i></b>\n\n<b><i>Hujumni toʻxtatish uchun <code>{prefix}komaruoff</code> dan foydalaning.</i></b>",
-        "launched_tag": "<b><i>Teg bilan Komarubulling ishga tushirildi! Maqsad: {user}</i></b>\n\n<b><i>Hujumni toʻxtatish uchun <code>{prefix}komaruoff</code> dan foydalaning.</i></b>",
+        "launched_tag": "<b><i>Teg bilan Komarubulling ishga tushirildi! Maqsad: @{username}</i></b>\n\n<b><i>Hujumni toʻxtatish uchun <code>{prefix}komaruoff</code> dan foydalaning.</i></b>",
         "stopped": "<b><i>Komarubulling to'xtadi.</i></b>",
     }
 
@@ -83,7 +85,7 @@ class KomarubullingMod(loader.Module):
         "error_valid_args": "<b><i>Bitte geben Sie gültige Argumente ein!</i></b>",
         "error_user": "<b><i>Bitte geben Sie einen zu markierenden Benutzer an (Antwort oder Erwähnung)!</i></b>",
         "launched": "<b><i>Komarubulling gestartet!</i></b>\n\n<b><i>Verwenden Sie <code>{prefix}komaruoff</code>, um den Angriff zu stoppen.</i></b>",
-        "launched_tag": "<b><i>Komarubulling mit Tag gestartet! Ziel: {user}</i></b>\n\n<b><i>Verwenden Sie <code>{prefix}komaruoff</code>, um den Angriff zu stoppen.</i></b>",
+        "launched_tag": "<b><i>Komarubulling mit Tag gestartet! Ziel: @{username}</i></b>\n\n<b><i>Verwenden Sie <code>{prefix}komaruoff</code>, um den Angriff zu stoppen.</i></b>",
         "stopped": "<b><i>Komarubulling hat angehalten.</i></b>",
     }
 
@@ -94,7 +96,7 @@ class KomarubullingMod(loader.Module):
         "error_valid_args": "<b><i>¡Por favor ingrese argumentos válidos!</i></b>",
         "error_user": "<b><i>¡Especifique un usuario para etiquetar (responder o mencionar)!</i></b>",
         "launched": "<b><i>¡Komarubulling lanzado!</i></b>\n\n<b><i>Utiliza <code>{prefix}komaruoff</code> para detener el ataque.</i></b>",
-        "launched_tag": "<b><i>¡Komarubulling con etiqueta lanzado! Objetivo: {user}</i></b>\n\n<b><i>Utiliza <code>{prefix}komaruoff</code> para detener el ataque.</i></b>",
+        "launched_tag": "<b><i>¡Komarubulling con etiqueta lanzado! Objetivo: @{username}</i></b>\n\n<b><i>Utiliza <code>{prefix}komaruoff</code> para detener el ataque.</i></b>",
         "stopped": "<b><i>Komarubulling se ha detenido.</i></b>",
     }
 
@@ -103,7 +105,7 @@ class KomarubullingMod(loader.Module):
         
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(url) as response:
+                async with session.get(url, timeout=10) as response:
                     if response.status == 200:
                         text = await response.text()
                         data = json.loads(text)
@@ -111,15 +113,43 @@ class KomarubullingMod(loader.Module):
                     else:
                         return None
         except Exception as e:
+            print(f"Error loading insults: {e}")
             return None
 
-    @loader.command(
-        ru_doc="Оскорбите вашего собеседника.",
-        uz_doc="Suhbatdoshingizni insult qiling.",
-        de_doc="Beleidigen Sie Ihren Gesprächspartner.",
-        es_doc="Insulta a tu interlocutor.",
-    )
-    async def komarubull(self, message):
+    async def get_user_username(self, message, args):
+        username = None
+        
+        if args:
+            for arg in args:
+                if arg.startswith('@'):
+                    username = arg.lstrip('@')
+                    break
+        
+        if not username:
+            reply = await message.get_reply_message()
+            if reply and reply.sender_id:
+                try:
+                    user = await message.client.get_entity(reply.sender_id)
+                    if hasattr(user, 'username') and user.username:
+                        username = user.username
+                except:
+                    pass
+        
+        if not username:
+            try:
+                if message.entities:
+                    for entity in message.entities:
+                        if hasattr(entity, 'user_id'):
+                            user = await message.client.get_entity(entity.user_id)
+                            if hasattr(user, 'username') and user.username:
+                                username = user.username
+                            break
+            except:
+                pass
+        
+        return username
+
+    async def komarubullcmd(self, message):
         data = await self.get_insults_data()
         
         if data is None:
@@ -132,23 +162,17 @@ class KomarubullingMod(loader.Module):
         else:
             await utils.answer(message, self.strings("error_key"))
 
-    @loader.command(
-        ru_doc="[time] [text] - Заспамте оскорблениями вашего собеседника",
-        uz_doc="[time] [text] - Suhbatdoshingizni haqorat bilan spam qiling",
-        de_doc="[time] [text] - Spammen Sie Ihren Gesprächspartner mit Beleidigungen zu",
-        es_doc="[time] [text] - Spamea a tu interlocutor con insultos",
-    )
-    async def komaruspam(self, message: Message):
-        """[time] [text] - Spam your interlocutor with insults"""
-        args = utils.get_args(message)
+    async def komaruspamcmd(self, message):
+        args = utils.get_args_raw(message)
 
         if not args:
             await utils.answer(message, self.strings("error_valid_args"))
             return
 
+        parts = args.split(' ', 1)
         try:
-            time = float(args[0])
-            text = ' '.join(args[1:]) + " " if len(args) > 1 else ""
+            time = float(parts[0])
+            text = parts[1] + " " if len(parts) > 1 else ""
         except ValueError:
             await utils.answer(message, self.strings("error_valid_args"))
             return
@@ -170,52 +194,40 @@ class KomarubullingMod(loader.Module):
             await message.respond(text + bull_text)
             await asyncio.sleep(time)
 
-    @loader.command(
-        ru_doc="[time] [tag @] - Спам оскорблениями с тегом пользователя",
-        uz_doc="[time] [tag @] - Foydalanuvchini teg bilan haqorat spam",
-        de_doc="[time] [tag @] - Spam-Beleidigungen mit Benutzer-Tag",
-        es_doc="[time] [tag @] - Spam de insultos con etiqueta de usuario",
-    )
-    async def komarutag(self, message: Message):
-        """[time] [tag @] - Spam insults with user tag"""
-        args = utils.get_args(message)
-        
-        user = None
-        reply = await message.get_reply_message()
-        
-        if reply and reply.sender_id:
-            try:
-                user = await message.client.get_entity(reply.sender_id)
-            except:
-                pass
-        
-        if not user and args:
-            for arg in args[1:]:
-                if arg.startswith('@'):
-                    try:
-                        user = await message.client.get_entity(arg)
-                        break
-                    except:
-                        pass
-        
-        if not user:
-            await utils.answer(message, self.strings("error_user"))
-            return
+    async def komarutagcmd(self, message):
+        """[time] [@username] [text] - Spam insults with @mention at start"""
+        args = utils.get_args_raw(message)
 
-        if not args or len(args) < 1:
+        if not args:
             await utils.answer(message, self.strings("error_valid_args"))
             return
 
+        parts = args.split(' ', 2)
+        
         try:
-            time = float(args[0])
-            text_args = []
-            for arg in args[1:]:
-                if not arg.startswith('@'):
-                    text_args.append(arg)
-            text = ' '.join(text_args) + " " if text_args else ""
+            time = float(parts[0])
         except ValueError:
             await utils.answer(message, self.strings("error_valid_args"))
             return
+
+        username = None
+        text = ""
+        
+        if len(parts) > 1:
+            if parts[1].startswith('@'):
+                username = parts[1].lstrip('@')
+                if len(parts) > 2:
+                    text = parts[2] + " "
+            else:
+                text = ' '.join(parts[1:]) + " "
+
+        if not username:
+            username = await self.get_user_username(message, parts[1:] if len(parts) > 1 else [])
+        
+        if not username:
+            await utils.answer(message, self.strings("error_user"))
+            return
+
         data = await self.get_insults_data()
         if data is None:
             await utils.answer(message, self.strings("error_uploading_data"))
@@ -225,29 +237,22 @@ class KomarubullingMod(loader.Module):
             await utils.answer(message, self.strings("error_key"))
             return
 
-        user_tag = f"[{user.first_name or ''}](tg://user?id={user.id}) "
-        
         self.db.set(self.strings["name"], "state", True)
         await utils.answer(
             message, 
             self.strings("launched_tag").format(
                 prefix=self.get_prefix(),
-                user=f"[{user.first_name or ''}](tg://user?id={user.id})"
+                username=username
             )
         )
         
         while self.db.get(self.strings["name"], "state"):
             bull_text = choice(data["BullText"])
-            await message.respond(user_tag + text + bull_text)
+            message_text = f"@{username} {text}{bull_text}"
+            await message.respond(message_text)
             await asyncio.sleep(time)
 
-    @loader.command(
-        ru_doc="Остановить оскорбления",
-        uz_doc="Haqoratlarni to'xtating",
-        de_doc="Hört auf mit den Beleidigungen",
-        es_doc="basta de insultos",
-    )
-    async def komaruoff(self, message: Message):
+    async def komaruoffcmd(self, message):
         """Stop the insults"""
         self.db.set(self.strings["name"], "state", False)
         await utils.answer(message, self.strings("stopped"))
