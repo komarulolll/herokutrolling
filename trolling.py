@@ -41,7 +41,6 @@ from .. import loader, utils
 
 @loader.tds
 class KomarubullingMod(loader.Module):
-    """Module for insults, make the interlocutor depressed."""
 
     strings = {
         "name": "Komarubulling",
@@ -99,6 +98,21 @@ class KomarubullingMod(loader.Module):
         "stopped": "<b><i>Komarubulling se ha detenido.</i></b>",
     }
 
+    async def get_insults_data(self):
+        url = "https://raw.githubusercontent.com/komarulolll/herokutrolling/main/insults.json"
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as response:
+                    if response.status == 200:
+                        text = await response.text()
+                        data = json.loads(text)
+                        return data
+                    else:
+                        return None
+        except Exception as e:
+            return None
+
     @loader.command(
         ru_doc="Оскорбите вашего собеседника.",
         uz_doc="Suhbatdoshingizni insult qiling.",
@@ -106,24 +120,17 @@ class KomarubullingMod(loader.Module):
         es_doc="Insulta a tu interlocutor.",
     )
     async def komarubull(self, message):
-        """Insult your interlocutor"""
-        url = "https://github.com/komarulolll/herokutrolling/blob/main/insults.json"
+        data = await self.get_insults_data()
         
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status == 200:
-                    response = await response.text()
-                    try:
-                        data = json.loads(response)
-                        if "BullText" in data and isinstance(data["BullText"], list) and data["BullText"]:
-                            text = choice(data["BullText"])
-                            await utils.answer(message, text)
-                        else:
-                            await utils.answer(message, self.strings("error_key"))
-                    except json.JSONDecodeError:
-                        await utils.answer(message, self.strings("error_decoding"))
-                else:
-                    await utils.answer(message, f"{self.strings('error_uploading_data')}: {response.status}")
+        if data is None:
+            await utils.answer(message, self.strings("error_uploading_data"))
+            return
+            
+        if "BullText" in data and isinstance(data["BullText"], list) and data["BullText"]:
+            text = choice(data["BullText"])
+            await utils.answer(message, text)
+        else:
+            await utils.answer(message, self.strings("error_key"))
 
     @loader.command(
         ru_doc="[time] [text] - Заспамте оскорблениями вашего собеседника",
@@ -133,14 +140,11 @@ class KomarubullingMod(loader.Module):
     )
     async def komaruspam(self, message: Message):
         """[time] [text] - Spam your interlocutor with insults"""
-        url = "https://github.com/komarulolll/herokutrolling/blob/main/insults.json"
         args = utils.get_args(message)
 
         if not args:
             await utils.answer(message, self.strings("error_valid_args"))
             return
-        else:
-            self.db.set(self.strings["name"], "state", True)
 
         try:
             time = float(args[0])
@@ -149,24 +153,22 @@ class KomarubullingMod(loader.Module):
             await utils.answer(message, self.strings("error_valid_args"))
             return
 
+        data = await self.get_insults_data()
+        if data is None:
+            await utils.answer(message, self.strings("error_uploading_data"))
+            return
+            
+        if not ("BullText" in data and isinstance(data["BullText"], list) and data["BullText"]):
+            await utils.answer(message, self.strings("error_key"))
+            return
+
+        self.db.set(self.strings["name"], "state", True)
         await utils.answer(message, self.strings("launched").format(prefix=self.get_prefix()))
         
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status == 200:
-                    response = await response.text()
-                    
-                    data = json.loads(response)
-                    if "BullText" in data and isinstance(data["BullText"], list) and data["BullText"]:
-                        while self.db.get(self.strings["name"], "state"):
-                            bull_text = choice(data["BullText"])
-                            await message.respond(text + bull_text)
-                            await asyncio.sleep(time)
-                        return
-                    else:
-                        return await utils.answer(message, self.strings("error_key"))
-                else:
-                    return await utils.answer(message, f"{self.strings('error_uploading_data')}: {response.status}")
+        while self.db.get(self.strings["name"], "state"):
+            bull_text = choice(data["BullText"])
+            await message.respond(text + bull_text)
+            await asyncio.sleep(time)
 
     @loader.command(
         ru_doc="[time] [tag @] - Спам оскорблениями с тегом пользователя",
@@ -176,42 +178,56 @@ class KomarubullingMod(loader.Module):
     )
     async def komarutag(self, message: Message):
         """[time] [tag @] - Spam insults with user tag"""
-        url = "https://github.com/komarulolll/herokutrolling/blob/main/insults.json"
         args = utils.get_args(message)
         
-        # Получаем пользователя для тега
         user = None
         reply = await message.get_reply_message()
         
         if reply and reply.sender_id:
-            user = await message.client.get_entity(reply.sender_id)
-        elif message.entities:
-            # Проверяем упоминания в сообщении
-            for entity in message.entities:
-                if hasattr(entity, 'user_id'):
-                    user = await message.client.get_entity(entity.user_id)
-                    break
+            try:
+                user = await message.client.get_entity(reply.sender_id)
+            except:
+                pass
+        
+        if not user and args:
+            for arg in args[1:]:
+                if arg.startswith('@'):
+                    try:
+                        user = await message.client.get_entity(arg)
+                        break
+                    except:
+                        pass
         
         if not user:
             await utils.answer(message, self.strings("error_user"))
             return
 
-        if not args:
+        if not args or len(args) < 1:
             await utils.answer(message, self.strings("error_valid_args"))
             return
-        else:
-            self.db.set(self.strings["name"], "state", True)
 
         try:
             time = float(args[0])
-            text = ' '.join(args[1:]) + " " if len(args) > 1 else ""
+            text_args = []
+            for arg in args[1:]:
+                if not arg.startswith('@'):
+                    text_args.append(arg)
+            text = ' '.join(text_args) + " " if text_args else ""
         except ValueError:
             await utils.answer(message, self.strings("error_valid_args"))
             return
+        data = await self.get_insults_data()
+        if data is None:
+            await utils.answer(message, self.strings("error_uploading_data"))
+            return
+            
+        if not ("BullText" in data and isinstance(data["BullText"], list) and data["BullText"]):
+            await utils.answer(message, self.strings("error_key"))
+            return
 
-        # Формируем тег пользователя
         user_tag = f"[{user.first_name or ''}](tg://user?id={user.id}) "
         
+        self.db.set(self.strings["name"], "state", True)
         await utils.answer(
             message, 
             self.strings("launched_tag").format(
@@ -220,23 +236,10 @@ class KomarubullingMod(loader.Module):
             )
         )
         
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status == 200:
-                    response = await response.text()
-                    
-                    data = json.loads(response)
-                    if "BullText" in data and isinstance(data["BullText"], list) and data["BullText"]:
-                        while self.db.get(self.strings["name"], "state"):
-                            bull_text = choice(data["BullText"])
-                            # Добавляем тег пользователя в начале сообщения
-                            await message.respond(user_tag + text + bull_text)
-                            await asyncio.sleep(time)
-                        return
-                    else:
-                        return await utils.answer(message, self.strings("error_key"))
-                else:
-                    return await utils.answer(message, f"{self.strings('error_uploading_data')}: {response.status}")
+        while self.db.get(self.strings["name"], "state"):
+            bull_text = choice(data["BullText"])
+            await message.respond(user_tag + text + bull_text)
+            await asyncio.sleep(time)
 
     @loader.command(
         ru_doc="Остановить оскорбления",
