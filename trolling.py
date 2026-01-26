@@ -26,234 +26,200 @@
 # ⚠️ Licensed under the GNU AGPLv3.
 # 💢 The owner of this script does not have any responsibility or intellectual property rights in relation to this script.
 # ---------------------------------------------------------------------------------
-# Name: TrollSpam
+# Name: Komarubulling
 # Author: https://t.me/I_love_wizzy
 # scope: heroku && hikka
 # ---------------------------------------------------------------------------------
-__version__ = (1, 0, 0)
+__version__ = (2, 2, 0)
 
 import json
 import aiohttp
 import asyncio
-import re
 from random import choice
-from telethon.tl.types import Message, Use
 from .. import loader, utils
 
 @loader.tds
 class KomarubullingMod(loader.Module):
-    """Module for insults, make the interlocutor depressed."""
-
+    """Spam insults with @mentions"""
+    
     strings = {
         "name": "Komarubulling",
-        "error_key": "<b><i>Error: Key 'BullText' not found.</i></b>",
-        "error_decoding": "<b><i>Error: The JSON could not be decoded.</i></b>",
-        "error_uploading_data": "<b><i>Error loading data</i></b>",
-        "error_valid_args": "<b><i>Please enter valid arguments!</i></b>",
-        "error_user": "<b><i>Please specify a user to tag (reply or mention)!</i></b>",
-        "launched": "<b><i>Komarubulling launched!</i></b>\n\n<b><i>Use <code>{prefix}komaruoff</code> to stop the attack.</i></b>",
-        "launched_tag": "<b><i>Komarubulling with tag launched! Target: @{username}</i></b>\n\n<b><i>Use <code>{prefix}komaruoff</code> to stop the attack.</i></b>",
-        "stopped": "<b><i>Komarubulling has stopped.</i></b>",
+        "loading": "🔄 Loading insults...",
+        "error": "❌ Error loading insults",
+        "no_args": "⚠️ Usage: .komarutag [time] [@username] [text]",
+        "no_user": "⚠️ Specify user with @ or reply",
+        "started": "✅ Komarubulling started! Target: @{}\n\nStop with: .komaruoff",
+        "stopped": "🛑 Komarubulling stopped",
+        "spam_started": "✅ Spam started!\n\nStop with: .komaruoff",
+        "insult_sent": "💢 Insult sent",
     }
 
-    strings_ru = {
-        "error_key": "<b><i>Error: ключ 'BullText' не найден.</i></b>",
-        "error_decoding": "<b><i>Error: не удалось декодировать JSON.</i></b>",
-        "error_uploading_data": "<b><i>Ошибка при загрузке данных</i></b>",
-        "error_valid_args": "<b><i>Введите корректные аргументы!</i></b>",
-        "error_user": "<b><i>Укажите пользователя для тега (ответом или упоминанием)!</i></b>",
-        "launched": "<b><i>Komarubulling запущен!</i></b>\n\n<b><i>Используйте <code>{prefix}komaruoff</code>, чтобы остановить атаку.</i></b>",
-        "launched_tag": "<b><i>Komarubulling с тегом запущен! Цель: @{username}</i></b>\n\n<b><i>Используйте <code>{prefix}komaruoff</code>, чтобы остановить атаку.</i></b>",
-        "stopped": "<b><i>Komarubulling остановлен.</i></b>",
-    }
+    async def client_ready(self, client, db):
+        self.client = client
+        self.db = db
+        self.insults = []
+        self.running = False
 
-    strings_uz = {
-        "error_key": "<b><i>Error: 'BullText' калити топилмади.</i></b>",
-        "error_decoding": "<b><i>Error: JSON декодлаш муваффақиятли амалга ошмади.</i></b>",
-        "error_uploading_data": "<b><i>Маълумотлар юклаб олинмади</i></b>",
-        "error_valid_args": "<b><i>Iltimos, to'g'ri dalillarni kiriting!</i></b>",
-        "error_user": "<b><i>Iltimos, teglash uchun foydalanuvchini ko'rsating (javob yoki eslatma)!</i></b>",
-        "launched": "<b><i>Komarubulling ishga tushirildi!</i></b>\n\n<b><i>Hujumni toʻxtatish uchun <code>{prefix}komaruoff</code> dan foydalaning.</i></b>",
-        "launched_tag": "<b><i>Teg bilan Komarubulling ishga tushirildi! Maqsad: @{username}</i></b>\n\n<b><i>Hujumni toʻxtatish uchun <code>{prefix}komaruoff</code> dan foydalaning.</i></b>",
-        "stopped": "<b><i>Komarubulling to'xtadi.</i></b>",
-    }
-
-    strings_de = {
-        "error_key": "<b><i>Error: Der Schlüssel 'BullText' wurde nicht gefunden.</i></b>",
-        "error_decoding": "<b><i>Error: JSON konnte nicht decodiert werden.</i></b>",
-        "error_uploading_data": "<b><i>Fehler beim Hochladen der Daten</i></b>",
-        "error_valid_args": "<b><i>Bitte geben Sie gültige Argumente ein!</i></b>",
-        "error_user": "<b><i>Bitte geben Sie einen zu markierenden Benutzer an (Antwort oder Erwähnung)!</i></b>",
-        "launched": "<b><i>Komarubulling gestartet!</i></b>\n\n<b><i>Verwenden Sie <code>{prefix}komaruoff</code>, um den Angriff zu stoppen.</i></b>",
-        "launched_tag": "<b><i>Komarubulling mit Tag gestartet! Ziel: @{username}</i></b>\n\n<b><i>Verwenden Sie <code>{prefix}komaruoff</code>, um den Angriff zu stoppen.</i></b>",
-        "stopped": "<b><i>Komarubulling hat angehalten.</i></b>",
-    }
-
-    strings_es = {
-        "error_key": "<b><i>Error: No se encontró la clave 'BullText'.</i></b>",
-        "error_decoding": "<b><i>Error: No se pudo decodificar JSON.</i></b>",
-        "error_uploading_data": "<b><i>Error al cargar los datos</i></b>",
-        "error_valid_args": "<b><i>¡Por favor ingrese argumentos válidos!</i></b>",
-        "error_user": "<b><i>¡Especifique un usuario para etiquetar (responder o mencionar)!</i></b>",
-        "launched": "<b><i>¡Komarubulling lanzado!</i></b>\n\n<b><i>Utiliza <code>{prefix}komaruoff</code> para detener el ataque.</i></b>",
-        "launched_tag": "<b><i>¡Komarubulling con etiqueta lanzado! Objetivo: @{username}</i></b>\n\n<b><i>Utiliza <code>{prefix}komaruoff</code> para detener el ataque.</i></b>",
-        "stopped": "<b><i>Komarubulling se ha detenido.</i></b>",
-    }
-
-    async def get_insults_data(self):
-        url = "https://raw.githubusercontent.com/komarulolll/herokutrolling/main/insults.json"
-        
+    async def load_insults(self):
+        """Load insults from GitHub"""
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(url, timeout=10) as response:
-                    if response.status == 200:
-                        text = await response.text()
-                        data = json.loads(text)
-                        return data
-                    else:
-                        return None
-        except Exception as e:
-            print(f"Error loading insults: {e}")
-            return None
+                async with session.get("https://raw.githubusercontent.com/komarulolll/herokutrolling/main/insults.json", timeout=5) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        self.insults = data.get("BullText", [])
+                        return True
+        except:
+            pass
+        return False
 
-    async def get_user_username(self, message, args):
+    async def get_username(self, message, args):
+        """Get username from message"""
         username = None
         
         if args:
-            for arg in args:
+            for arg in args.split():
                 if arg.startswith('@'):
-                    username = arg.lstrip('@')
+                    username = arg[1:]
                     break
         
         if not username:
             reply = await message.get_reply_message()
-            if reply and reply.sender_id:
-                try:
-                    user = await message.client.get_entity(reply.sender_id)
-                    if hasattr(user, 'username') and user.username:
-                        username = user.username
-                except:
-                    pass
+            if reply:
+                user = await self.client.get_entity(reply.sender_id)
+                username = getattr(user, 'username', None)
         
-        if not username:
-            try:
-                if message.entities:
-                    for entity in message.entities:
-                        if hasattr(entity, 'user_id'):
-                            user = await message.client.get_entity(entity.user_id)
-                            if hasattr(user, 'username') and user.username:
-                                username = user.username
+        if not username and message.entities:
+            for entity in message.entities:
+                if hasattr(entity, 'user_id'):
+                    try:
+                        user = await self.client.get_entity(entity.user_id)
+                        username = getattr(user, 'username', None)
+                        if username:
                             break
-            except:
-                pass
+                    except:
+                        continue
         
         return username
 
-    async def komarubullcmd(self, message):
-        data = await self.get_insults_data()
-        
-        if data is None:
-            await utils.answer(message, self.strings("error_uploading_data"))
-            return
-            
-        if "BullText" in data and isinstance(data["BullText"], list) and data["BullText"]:
-            text = choice(data["BullText"])
-            await utils.answer(message, text)
-        else:
-            await utils.answer(message, self.strings("error_key"))
-
-    async def komaruspamcmd(self, message):
-        args = utils.get_args_raw(message)
-
-        if not args:
-            await utils.answer(message, self.strings("error_valid_args"))
-            return
-
-        parts = args.split(' ', 1)
-        try:
-            time = float(parts[0])
-            text = parts[1] + " " if len(parts) > 1 else ""
-        except ValueError:
-            await utils.answer(message, self.strings("error_valid_args"))
-            return
-
-        data = await self.get_insults_data()
-        if data is None:
-            await utils.answer(message, self.strings("error_uploading_data"))
-            return
-            
-        if not ("BullText" in data and isinstance(data["BullText"], list) and data["BullText"]):
-            await utils.answer(message, self.strings("error_key"))
-            return
-
-        self.db.set(self.strings["name"], "state", True)
-        await utils.answer(message, self.strings("launched").format(prefix=self.get_prefix()))
-        
-        while self.db.get(self.strings["name"], "state"):
-            bull_text = choice(data["BullText"])
-            await message.respond(text + bull_text)
-            await asyncio.sleep(time)
-
+    @loader.command(
+        ru_doc="[time] [@username] [text] - Спам с упоминанием",
+        uz_doc="[time] [@username] [text] - Teg bilan spam",
+        de_doc="[time] [@username] [text] - Spam mit Erwähnung",
+        es_doc="[time] [@username] [text] - Spam con mención",
+    )
     async def komarutagcmd(self, message):
-        """[time] [@username] [text] - Spam insults with @mention at start"""
+        """[time] [@username] [text] - Spam with @mention"""
         args = utils.get_args_raw(message)
-
-        if not args:
-            await utils.answer(message, self.strings("error_valid_args"))
-            return
-
-        parts = args.split(' ', 2)
         
-        try:
-            time = float(parts[0])
-        except ValueError:
-            await utils.answer(message, self.strings("error_valid_args"))
+        if not args:
+            await utils.answer(message, self.strings("no_args"))
             return
-
+        
+        parts = args.split(' ', 2)
+        try:
+            time_val = float(parts[0])
+        except:
+            await utils.answer(message, self.strings("no_args"))
+            return
+        
         username = None
-        text = ""
+        custom_text = ""
         
         if len(parts) > 1:
             if parts[1].startswith('@'):
-                username = parts[1].lstrip('@')
+                username = parts[1][1:]
                 if len(parts) > 2:
-                    text = parts[2] + " "
+                    custom_text = parts[2] + " "
             else:
-                text = ' '.join(parts[1:]) + " "
-
-        if not username:
-            username = await self.get_user_username(message, parts[1:] if len(parts) > 1 else [])
+                username = await self.get_username(message, args)
+                if username:
+                    custom_text = ' '.join(parts[1:]) + " "
+                else:
+                    await utils.answer(message, self.strings("no_user"))
+                    return
         
         if not username:
-            await utils.answer(message, self.strings("error_user"))
-            return
+            username = await self.get_username(message, args)
+            if not username:
+                await utils.answer(message, self.strings("no_user"))
+                return
 
-        data = await self.get_insults_data()
-        if data is None:
-            await utils.answer(message, self.strings("error_uploading_data"))
-            return
-            
-        if not ("BullText" in data and isinstance(data["BullText"], list) and data["BullText"]):
-            await utils.answer(message, self.strings("error_key"))
-            return
-
-        self.db.set(self.strings["name"], "state", True)
-        await utils.answer(
-            message, 
-            self.strings("launched_tag").format(
-                prefix=self.get_prefix(),
-                username=username
-            )
-        )
+        await utils.answer(message, self.strings("loading"))
+        if not self.insults:
+            if not await self.load_insults():
+                await utils.answer(message, self.strings("error"))
+                return
+                
+        self.running = True
+        await utils.answer(message, self.strings("started").format(username))
         
-        while self.db.get(self.strings["name"], "state"):
-            bull_text = choice(data["BullText"])
-            message_text = f"@{username} {text}{bull_text}"
-            await message.respond(message_text)
-            await asyncio.sleep(time)
+        while self.running and self.insults:
+            insult = choice(self.insults)
+            msg_text = f"@{username} {custom_text}{insult}"
+            await self.client.send_message(message.chat_id, msg_text)
+            await asyncio.sleep(time_val)
 
+    @loader.command(
+        ru_doc="[time] [text] - Спам без упоминания",
+        uz_doc="[time] [text] - Tegsiz spam",
+        de_doc="[time] [text] - Spam ohne Erwähnung",
+        es_doc="[time] [text] - Spam sin mención",
+    )
+    async def komaruspamcmd(self, message):
+        """[time] [text] - Spam without mention"""
+        args = utils.get_args_raw(message)
+        
+        if not args:
+            await utils.answer(message, self.strings("no_args"))
+            return
+        
+        parts = args.split(' ', 1)
+        try:
+            time_val = float(parts[0])
+            custom_text = parts[1] + " " if len(parts) > 1 else ""
+        except:
+            await utils.answer(message, self.strings("no_args"))
+            return
+
+        await utils.answer(message, self.strings("loading"))
+        if not self.insults:
+            if not await self.load_insults():
+                await utils.answer(message, self.strings("error"))
+                return
+
+        self.running = True
+        await utils.answer(message, self.strings("spam_started"))
+        
+        while self.running and self.insults:
+            insult = choice(self.insults)
+            msg_text = f"{custom_text}{insult}"
+            await self.client.send_message(message.chat_id, msg_text)
+            await asyncio.sleep(time_val)
+
+    @loader.command(
+        ru_doc="Отправить одно оскорбление",
+        uz_doc="Bitta haqorat yuborish",
+        de_doc="Eine Beleidigung senden",
+        es_doc="Enviar un insulto",
+    )
+    async def komarubullcmd(self, message):
+        """Send one insult"""
+        if not self.insults:
+            if not await self.load_insults():
+                await utils.answer(message, self.strings("error"))
+                return
+        
+        insult = choice(self.insults)
+        await utils.answer(message, insult)
+
+    @loader.command(
+        ru_doc="Остановить спам",
+        uz_doc="Spamni to'xtatish",
+        de_doc="Spam stoppen",
+        es_doc="Detener spam",
+    )
     async def komaruoffcmd(self, message):
-        """Stop the insults"""
-        self.db.set(self.strings["name"], "state", False)
+        """Stop spam"""
+        self.running = False
         await utils.answer(message, self.strings("stopped"))
-        return
