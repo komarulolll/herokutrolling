@@ -40,17 +40,17 @@ from .. import loader, utils
 from telethon.tl.types import Message # type: ignore
 
 @loader.tds
-class AuroraBullMod(loader.Module):
+class KomarubullingMod(loader.Module):
     """Module for insults, make the interlocutor depressed."""
 
     strings = {
-        "name": "AuroraBull",
+        "name": "Komarubulling",
         "error_key": "<b><i>Error: Key 'BullText' not found.</i></b>",
         "error_decoding": "<b><i>Error: The JSON could not be decoded.</i></b>",
         "error_uploading_data": "<b><i>Error loading data</i></b>",
         "error_valid_args": "<b><i>Please enter valid arguments!</i></b>",
-        "launched": "<b><i>AuroraBull launched!</i></b>\n\n<b><i>Use <code>{prefix}abulloff</code> to stop the attack.</i></b>",
-        "stopped": "<b><i>AuroraBull has stopped.</i></b>",
+        "launched": "<b><i>Komarubulling launched!</i></b>\n\n<b><i>Use <code>{prefix}komaruoff</code> to stop the attack.</i></b>",
+        "stopped": "<b><i>Komarubulling has stopped.</i></b>",
     }
 
     strings_ru = {
@@ -58,8 +58,8 @@ class AuroraBullMod(loader.Module):
         "error_decoding": "<b><i>Error: не удалось декодировать JSON.</i></b>",
         "error_uploading_data": "<b><i>Ошибка при загрузке данных</i></b>",
         "error_valid_args": "<b><i>Введите корректные аргументы!</i></b>",
-        "launched": "<b><i>AuroraBull запущен!</i></b>\n\n<b><i>Используйте <code>{prefix}abulloff</code>, чтобы остановить атаку.</i></b>",
-        "stopped": "<b><i>AuroraBull остановлен.</i></b>",
+        "launched": "<b><i>Komarubulling запущен!</i></b>\n\n<b><i>Используйте <code>{prefix}komaruoff</code>, чтобы остановить атаку.</i></b>",
+        "stopped": "<b><i>Komarubulling остановлен.</i></b>",
     }
 
     strings_uz = {
@@ -67,8 +67,8 @@ class AuroraBullMod(loader.Module):
         "error_decoding": "<b><i>Error: JSON декодлаш муваффақиятли амалга ошмади.</i></b>",
         "error_uploading_data": "<b><i>Маълумотлар юклаб олинмади</i></b>",
         "error_valid_args": "<b><i>Iltimos, to'g'ri dalillarni kiriting!</i></b>",
-        "launched": "<b><i>AuroraBull ishga tushirildi!</i></b>\n\n<b><i>Hujumni toʻxtatish uchun <code>{prefix}abulloff</code> dan foydalaning.</i></b>",
-        "stopped": "<b><i>AuroraBull to'xtadi.</i></b>",
+        "launched": "<b><i>Komarubulling ishga tushirildi!</i></b>\n\n<b><i>Hujumni toʻxtatish uchun <code>{prefix}komaruoff</code> dan foydalaning.</i></b>",
+        "stopped": "<b><i>Komarubulling to'xtadi.</i></b>",
     }
 
     strings_de = {
@@ -76,8 +76,8 @@ class AuroraBullMod(loader.Module):
         "error_decoding": "<b><i>Error: JSON konnte nicht decodiert werden.</i></b>",
         "error_uploading_data": "<b><i>Fehler beim Hochladen der Daten</i></b>",
         "error_valid_args": "<b><i>Bitte geben Sie gültige Argumente ein!</i></b>",
-        "launched": "<b><i>AuroraBull gestartet!</i></b>\n\n<b><i>Verwenden Sie <code>{prefix}abulloff</code>, um den Angriff zu stoppen.</i></b>",
-        "stopped": "<b><i>AuroraBull hat angehalten.</i></b>",
+        "launched": "<b><i>Komarubulling gestartet!</i></b>\n\n<b><i>Verwenden Sie <code>{prefix}komaruoff</code>, um den Angriff zu stoppen.</i></b>",
+        "stopped": "<b><i>Komarubulling hat angehalten.</i></b>",
     }
 
     strings_es = {
@@ -85,9 +85,8 @@ class AuroraBullMod(loader.Module):
         "error_decoding": "<b><i>Error: No se pudo decodificar JSON.</i></b>",
         "error_uploading_data": "<b><i>Error al cargar los datos</i></b>",
         "error_valid_args": "<b><i>¡Por favor ingrese argumentos válidos!</i></b>",
-        "launched": "<b><i>¡AuroraBull lanzado!</i></b>\n\n<b><i>Utiliza <code>{prefix}abulloff</code> para detener el ataque.</i></b>",
-        "stopped": "<b><i>AuroraBull se ha detenido.</i></b>",
-        
+        "launched": "<b><i>¡Komarubulling lanzado!</i></b>\n\n<b><i>Utiliza <code>{prefix}komaruoff</code> para detener el ataque.</i></b>",
+        "stopped": "<b><i>Komarubulling se ha detenido.</i></b>",
     }
 
     @loader.command(
@@ -96,7 +95,7 @@ class AuroraBullMod(loader.Module):
         de_doc="Beleidigen Sie Ihren Gesprächspartner.",
         es_doc="Insulta a tu interlocutor.",
     )
-    async def abull(self, message):
+    async def komarubull(self, message):
         """Insult your interlocutor"""
         url = "https://raw.githubusercontent.com/KorenbZla/HikkaModules/main/AuroraBull.json"
         
@@ -122,7 +121,7 @@ class AuroraBullMod(loader.Module):
         de_doc="[time] [text] - Spammen Sie Ihren Gesprächspartner mit Beleidigungen zu",
         es_doc="[time] [text] - Spamea a tu interlocutor con insultos",
     )
-    async def abullspam(self, message: Message):
+    async def komaruspam(self, message: Message):
         """[time] [text] - Spam your interlocutor with insults"""
         url = "https://raw.githubusercontent.com/KorenbZla/HikkaModules/main/AuroraBull.json"
         args = utils.get_args(message)
@@ -131,7 +130,7 @@ class AuroraBullMod(loader.Module):
             await utils.answer(message, self.strings("error_valid_args"))
             return
         else:
-            self.db.set(self.strings["AuroraBull"], "state", True)
+            self.db.set(self.strings["name"], "state", True)
 
         try:
             time = float(args[0])
@@ -149,7 +148,7 @@ class AuroraBullMod(loader.Module):
                     
                     data = json.loads(response)
                     if "BullText" in data and isinstance(data["BullText"], list) and data["BullText"]:
-                        while self.db.get(self.strings["AuroraBull"], "state"):
+                        while self.db.get(self.strings["name"], "state"):
                             bull_text = choice(data["BullText"])
                             await message.respond(text + bull_text)
                             await asyncio.sleep(time)
@@ -165,8 +164,8 @@ class AuroraBullMod(loader.Module):
         de_doc="Hört auf mit den Beleidigungen",
         es_doc="basta de insultos",
     )
-    async def abulloff(self, message: Message):
+    async def komaruoff(self, message: Message):
         """Stop the insults"""
-        self.db.set(self.strings["AuroraBull"], "state", False)
+        self.db.set(self.strings["name"], "state", False)
         await utils.answer(message, self.strings("stopped"))
-        return 
+        return
