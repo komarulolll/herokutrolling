@@ -97,7 +97,7 @@ class KomarubullingMod(loader.Module):
     )
     async def komarubull(self, message):
         """Insult your interlocutor"""
-        url = "https://github.com/komarulolll/herokutrolling/blob/main/insults.json"
+        url = "https://raw.githubusercontent.com/komarulolll/herokutrolling/main/insults.json"
         
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
@@ -123,7 +123,7 @@ class KomarubullingMod(loader.Module):
     )
     async def komaruspam(self, message: Message):
         """[time] [text] - Spam your interlocutor with insults"""
-        url = "https://github.com/komarulolll/herokutrolling/blob/main/insults.json"
+        url = "https://raw.githubusercontent.com/komarulolll/herokutrolling/main/insults.json"
         args = utils.get_args(message)
 
         if not args:
