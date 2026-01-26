@@ -102,9 +102,9 @@ class KomarubullingMod(loader.Module):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 if response.status == 200:
-                    response = await response.text()
+                    response_text = await response.text()
                     try:
-                        data = json.loads(response)
+                        data = json.loads(response_text)
                         if "BullText" in data and isinstance(data["BullText"], list) and data["BullText"]:
                             text = choice(data["BullText"])
                             await utils.answer(message, text)
@@ -144,17 +144,20 @@ class KomarubullingMod(loader.Module):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 if response.status == 200:
-                    response = await response.text()
+                    response_text = await response.text()
                     
-                    data = json.loads(response)
-                    if "BullText" in data and isinstance(data["BullText"], list) and data["BullText"]:
-                        while self.db.get(self.strings["name"], "state"):
-                            bull_text = choice(data["BullText"])
-                            await message.respond(text + bull_text)
-                            await asyncio.sleep(time)
-                        return
-                    else:
-                        return await utils.answer(message, self.strings("error_key"))
+                    try:
+                        data = json.loads(response_text)
+                        if "BullText" in data and isinstance(data["BullText"], list) and data["BullText"]:
+                            while self.db.get(self.strings["name"], "state"):
+                                bull_text = choice(data["BullText"])
+                                await message.respond(text + bull_text)
+                                await asyncio.sleep(time)
+                            return
+                        else:
+                            return await utils.answer(message, self.strings("error_key"))
+                    except json.JSONDecodeError:
+                        return await utils.answer(message, self.strings("error_decoding"))
                 else:
                     return await utils.answer(message, f"{self.strings('error_uploading_data')}: {response.status}")
 
