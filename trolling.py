@@ -53,14 +53,16 @@ class KomarubullingMod(loader.Module):
         self.is_active = False
 
     @loader.command(
-        ru_doc="Оскорбите вашего собеседника.",
-        uz_doc="Suhbatdoshingizni insult qiling.",
-        de_doc="Beleidigen Sie Ihren Gesprächspartner.",
-        es_doc="Insulta a tu interlocutor.",
+        ru_doc="[текст] - Оскорбить собеседника с вашим текстом",
+        uz_doc="[matn] - Suhbatdoshingizni sizning matningiz bilan haqorat qiling",
+        de_doc="[text] - Beleidigen Sie Ihren Gesprächspartner mit Ihrem Text",
+        es_doc="[texto] - Insulta a tu interlocutor con tu texto",
     )
-    async def komarubull(self, message):
-        """Gelya whore"""
+    async def komarubull(self, message: Message):
+        """[text] - Insult with your text added"""
         url = "https://raw.githubusercontent.com/komarulolll/herokutrolling/main/insults.json"
+        args = utils.get_args(message)
+        custom_text = ' '.join(args) + ' ' if args else ''
         
         await message.delete()
         
@@ -71,7 +73,7 @@ class KomarubullingMod(loader.Module):
                     try:
                         data = json.loads(response_text)
                         if "BullText" in data and isinstance(data["BullText"], list) and data["BullText"]:
-                            text = choice(data["BullText"])
+                            text = custom_text + choice(data["BullText"])
                             await self.client.send_message(
                                 message.chat_id,
                                 text
@@ -80,13 +82,13 @@ class KomarubullingMod(loader.Module):
                         pass
 
     @loader.command(
-        ru_doc="[time] - Заспамте оскорблениями вашего собеседника",
-        uz_doc="[time] - Suhbatdoshingizni haqorat bilan spam qiling",
-        de_doc="[time] - Spammen Sie Ihren Gesprächspartner mit Beleidigungen zu",
-        es_doc="[time] - Spamea a tu interlocutor con insultos",
+        ru_doc="[time] [text] - Спам оскорблениями с вашим текстом",
+        uz_doc="[time] [text] - Sizning matningiz bilan haqorat spam",
+        de_doc="[time] [text] - Spam mit Beleidigungen und Ihrem Text",
+        es_doc="[time] [texto] - Spam con insultos y tu texto",
     )
     async def komaruspam(self, message: Message):
-        """fuck you"""
+        """[time] [text] - Spam with your text added to insults"""
         url = "https://raw.githubusercontent.com/komarulolll/herokutrolling/main/insults.json"
         args = utils.get_args(message)
 
@@ -98,6 +100,7 @@ class KomarubullingMod(loader.Module):
         
         try:
             time = float(args[0])
+            custom_text = ' '.join(args[1:]) + ' ' if len(args) > 1 else ''
         except:
             return
         
@@ -111,7 +114,7 @@ class KomarubullingMod(loader.Module):
                         data = json.loads(response_text)
                         if "BullText" in data and isinstance(data["BullText"], list) and data["BullText"]:
                             while self.is_active:
-                                text = choice(data["BullText"])
+                                text = custom_text + choice(data["BullText"])
                                 await self.client.send_message(
                                     message.chat_id,
                                     text
