@@ -59,6 +59,7 @@ class KomarubullingMod(loader.Module):
         es_doc="Insulta a tu interlocutor.",
     )
     async def komarubull(self, message):
+        """геля иди нахуй рахмон чмо"""
         url = "https://raw.githubusercontent.com/komarulolll/herokutrolling/main/insults.json"
         
         await message.delete()
@@ -85,6 +86,7 @@ class KomarubullingMod(loader.Module):
         es_doc="[time] - Spamea a tu interlocutor con insultos",
     )
     async def komaruspam(self, message: Message):
+        """геля скотина"""
         url = "https://raw.githubusercontent.com/komarulolll/herokutrolling/main/insults.json"
         args = utils.get_args(message)
 
